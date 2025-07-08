@@ -1,0 +1,78 @@
+# Render Blueprint Configuration
+# This file allows you to deploy all services with one click on Render
+
+services:
+  # FastAPI Backend Service
+  - type: web
+    name: intellimcp-backend
+    runtime: python
+    repo: https://github.com/YOUR_GITHUB_USERNAME/mcpmaker
+    branch: main
+    rootDir: backend
+    buildCommand: pip install -r requirements.prod.txt
+    startCommand: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: intellimcp-db
+          property: connectionString
+      - key: CHROMA_HOST
+        fromService:
+          name: intellimcp-chromadb
+          type: pserv
+          property: hostport
+      - key: CHROMA_PORT
+        value: 8000
+      - key: CLERK_SECRET_KEY
+        sync: false  # Set in Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false  # Set in Render dashboard
+      - key: SENTRY_DSN
+        sync: false  # Set in Render dashboard (optional)
+    healthCheckPath: /health
+    autoDeploy: true
+
+  # ChromaDB Vector Store Service
+  - type: pserv
+    name: intellimcp-chromadb
+    runtime: docker
+    repo: https://github.com/YOUR_GITHUB_USERNAME/mcpmaker
+    branch: main
+    rootDir: backend
+    dockerfilePath: ./Dockerfile.chromadb
+    dockerContext: .
+    disk:
+      name: chromadb-data
+      mountPath: /chroma/chroma
+      sizeGB: 10
+    envVars:
+      - key: PERSIST_DIRECTORY
+        value: /chroma/chroma
+      - key: CHROMA_SERVER_HOST
+        value: 0.0.0.0
+      - key: CHROMA_SERVER_PORT
+        value: 8000
+    autoDeploy: true
+
+databases:
+  # PostgreSQL Database (Alternative to Supabase)
+  - name: intellimcp-db
+    plan: starter  # or 'standard' for production
+    databaseName: intellimcp_prod
+    user: intellimcp_user
+    postgresMajorVersion: 15
+
+# Environment Groups (Shared environment variables)
+envVarGroups:
+  - name: intellimcp-shared
+    envVars:
+      - key: LOG_LEVEL
+        value: INFO
+      - key: LOG_FORMAT
+        value: json
+      - key: RATE_LIMIT_ENABLED
+        value: true
+      - key: RATE_LIMIT_DEFAULT
+        value: 100/hour 

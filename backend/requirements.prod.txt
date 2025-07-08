@@ -1,0 +1,40 @@
+# Production Requirements for IntelliMCP Backend
+# Extends base requirements.txt with production-specific packages
+
+# Include base requirements
+-r requirements.txt
+
+# Production web server
+gunicorn==23.0.0
+uvicorn[standard]==0.34.2
+
+# Database migrations
+alembic==1.14.0
+
+# Production monitoring and logging
+sentry-sdk==2.18.1
+python-json-logger==3.2.1
+
+# Rate limiting
+slowapi==0.1.9
+
+# Redis for caching (optional)
+redis==5.2.2
+hiredis==3.0.0
+
+# Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Health checks and metrics
+prometheus-client==0.22.0
+
+# Async support
+aiofiles==24.1.0
+aiocache==0.12.3
+
+# Production-grade HTTP client
+httpx[http2]==0.28.1
+
+# Environment management
+python-decouple==3.8 

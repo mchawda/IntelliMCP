@@ -1,0 +1,28 @@
+# ChromaDB Production Dockerfile
+FROM chromadb/chroma:latest
+
+# Set environment variables
+ENV CHROMA_SERVER_HOST=0.0.0.0
+ENV CHROMA_SERVER_PORT=8000
+ENV CHROMA_SERVER_LOG_LEVEL=INFO
+ENV PERSIST_DIRECTORY=/chroma/chroma
+
+# Create directory for persistent storage
+RUN mkdir -p /chroma/chroma
+
+# Expose the ChromaDB port
+EXPOSE 8000
+
+# Volume for persistent data
+VOLUME ["/chroma/chroma"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD python -c "import requests; requests.get('http://localhost:8000/api/v1/heartbeat').raise_for_status()" || exit 1
+
+# Run ChromaDB with production settings
+CMD ["uvicorn", "chromadb.app:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "1", \
+     "--log-level", "info"] 
